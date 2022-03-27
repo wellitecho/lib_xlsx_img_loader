@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+
 #[derive(Error, Debug)]
 pub enum XlsxPathParseError {
     #[error("invalid format. (expected {expected:?}, found {found:?})")]
@@ -16,6 +17,7 @@ pub enum XlsxPathParseError {
 pub enum ImgLoaderError {
     #[error("cannot create temp dir: {0}")]
     CreateTempDirError(String),
-    #[error("failed to unzip xlsx file")]
-    UnzipXlsxError,
+    #[error(transparent)]
+    UnzipXlsxError(#[from] std::io::Error),
 }
+
