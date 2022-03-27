@@ -8,13 +8,25 @@ use std::path::{Path, PathBuf};
 use std::primitive::str;
 use std::str::FromStr;
 
+/// main struct to contain the retrieved info
+///
+/// 
+/// **xlsx_path**: the given xlsx file path, parsed from user input
+/// 
+/// **worksheet_name_id_map**: a map of {sheetname: sheet_id}
+/// 
+/// **worksheet_name_img_map**: a full map of {sheetname: {(col, row): imgpath}}
+/// 
 pub struct ImgLoader {
     pub xlsx_path: XlsxPath,
     pub worksheet_name_id_map: HashMap<i64, String>,
-    pub workbook_name_img_map: HashMap<String, HashMap<(i64, i64), Vec<PathBuf>>>,
+    pub worksheet_name_img_map: HashMap<String, HashMap<(i64, i64), Vec<PathBuf>>>,
 }
 
 impl ImgLoader {
+    /// construct a new ImgLoader
+    /// 
+    /// note: a temp/ dir will be created in the current dir
     pub fn new(xlsx_path: XlsxPath) -> Result<Self, ImgLoaderError> {
         let temp_dir = Path::new("./temp");
         if !temp_dir.exists() {
@@ -76,7 +88,7 @@ impl ImgLoader {
                 Ok(ImgLoader {
                     xlsx_path,
                     worksheet_name_id_map,
-                    workbook_name_img_map,
+                    worksheet_name_img_map: workbook_name_img_map,
                 })
             }
         }
@@ -84,9 +96,11 @@ impl ImgLoader {
 }
 
 #[derive(Debug, Display, PartialEq, Eq)]
+/// a NewType containing a string ended with .xlsx
 pub struct XlsxPath(String);
 
 impl XlsxPath {
+    /// convert inner String to PathBuf
     pub fn as_pathbuf(&self) -> PathBuf {
         PathBuf::from(&self.0)
     }
