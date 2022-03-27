@@ -5,23 +5,35 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::primitive::str;
 
-pub fn unzip_xlsx(xlsx_file: &PathBuf, temp_dir: &Path) -> Result<PathBuf, Error> {
-    if !xlsx_file.is_file() {
-        return Err(anyhow!("xlsx file does not exist"));
-    }
-    let ext = xlsx_file
+fn get_file_ext_lower<S>(filepath: S) -> String
+where
+    S: AsRef<Path>,
+{
+    let ext_lower = filepath
+        .as_ref()
         .extension()
         .and_then(OsStr::to_str)
         .map_or(String::new(), str::to_lowercase);
+    ext_lower
+}
+
+pub fn unzip_xlsx<M, N>(xlsx_file: M, temp_dir: N) -> Result<PathBuf, Error>
+where
+    M: AsRef<Path>,
+    N: AsRef<Path>,
+{
+    if !xlsx_file.as_ref().is_file() {
+        return Err(anyhow!("xlsx file does not exist"));
+    }
+    let ext = get_file_ext_lower(xlsx_file.as_ref());
     if ext != "xlsx" {
         return Err(anyhow!("Invalid xlsx extension, expect '.xlsx' file"));
     }
 
-    let parent = xlsx_file.parent().unwrap();
-    let file_stem = xlsx_file.file_stem().unwrap().to_str().unwrap();
+    let file_stem = xlsx_file.as_ref().file_stem().unwrap().to_str().unwrap();
 
-    let temp_dir_xlsx = temp_dir.join(file_stem);
-    let rename_to_zip = parent.join(format!("{file_stem}.zip"));
+    let temp_dir_xlsx = temp_dir.as_ref().join(file_stem);
+    let rename_to_zip = temp_dir.as_ref().join(format!("{file_stem}.zip"));
     // force to overwrite
     fs::copy(xlsx_file, &rename_to_zip).unwrap();
 
