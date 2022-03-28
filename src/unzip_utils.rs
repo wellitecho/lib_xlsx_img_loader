@@ -32,7 +32,7 @@ where
     // force to overwrite
     fs::copy(xlsx_file, &rename_to_zip)?;
 
-    let file = fs::File::open(rename_to_zip)?;
+    let file = fs::File::open(&rename_to_zip)?;
     let mut archive = zip::ZipArchive::new(file).unwrap();
 
     for i in 0..archive.len() {
@@ -59,7 +59,7 @@ where
         }
     }
     let xl_dir = unzip_dir.join("xl");
-
+    fs::remove_file(&rename_to_zip)?;
     Ok(UnzippedPaths {
         unzip_dir,
         media_dir: xl_dir.join("media"),
