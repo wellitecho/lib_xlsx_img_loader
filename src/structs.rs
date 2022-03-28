@@ -20,11 +20,20 @@ use std::str::FromStr;
 ///
 pub struct ImgLoader {
     pub xlsx_path: XlsxPath,
+    pub unzip_dir: PathBuf,
     pub worksheet_name_id_map: HashMap<i64, String>,
     pub worksheet_name_img_map:
         HashMap<String, HashMap<(i64, i64), Vec<PathBuf>>>,
+    pub worksheet_id_img_map: HashMap<i64, HashMap<(i64, i64), Vec<PathBuf>>>,
 }
-
+impl Drop for ImgLoader {
+    fn drop(&mut self) {
+        match std::fs::remove_dir_all(&self.unzip_dir) {
+            Ok(_) => {}
+            Err(_) => {}
+        }
+    }
+}
 impl ImgLoader {
     /// construct a new ImgLoader
     ///
@@ -46,7 +55,7 @@ impl ImgLoader {
         match unzip_utils::unzip_xlsx(&xlsx_path, temp_dir) {
             Err(e) => return Err(e),
             Ok(UnzippedPaths {
-                unzip_dir: _,
+                unzip_dir,
                 media_dir,
                 workbook_xml,
                 drawing_dir,
@@ -54,7 +63,7 @@ impl ImgLoader {
                 worksheet_rels_dir,
             }) => {
                 let mut worksheet_name_img_map = HashMap::new();
-
+                let mut worksheet_id_img_map = HashMap::new();
                 // parse workbook_xml, get worksheet names and ids
                 let worksheet_name_id_map =
                     parse_xml::get_worksheet_name_id_map(
@@ -95,15 +104,21 @@ impl ImgLoader {
                                     media_dir.as_path(),
                                 );
 
-                            worksheet_name_img_map
-                                .insert(sheet_name, col_row_abs_img_dict);
+                            worksheet_name_img_map.insert(
+                                sheet_name,
+                                col_row_abs_img_dict.clone(),
+                            );
+                            worksheet_id_img_map
+                                .insert(sheet_id, col_row_abs_img_dict);
                         }
                     }
                 }
                 Ok(ImgLoader {
                     xlsx_path,
+                    unzip_dir,
                     worksheet_name_id_map,
                     worksheet_name_img_map,
+                    worksheet_id_img_map,
                 })
             }
         }
