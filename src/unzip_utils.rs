@@ -1,11 +1,9 @@
 // use anyhow::{anyhow, Error, Result};
-use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::primitive::str;
 
-use super::errors::ImgLoaderError;
+use super::errors::IoError;
 use super::structs::XlsxPath;
 
 pub struct UnzippedPaths {
@@ -16,22 +14,12 @@ pub struct UnzippedPaths {
     pub drawing_rels_dir: PathBuf,
     pub worksheet_rels_dir: PathBuf,
 }
-/// get file extension as string lowercase
-fn get_file_ext_lower<S>(filepath: S) -> String
-where
-    S: AsRef<Path>,
-{
-    filepath
-        .as_ref()
-        .extension()
-        .and_then(OsStr::to_str)
-        .map_or(String::new(), str::to_lowercase)
-}
+
 
 pub fn unzip_xlsx<N>(
     xlsx_file: &XlsxPath,
     temp_dir: N,
-) -> Result<UnzippedPaths, ImgLoaderError>
+) -> Result<UnzippedPaths, IoError>
 where
     N: AsRef<Path>,
 {

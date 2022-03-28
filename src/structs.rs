@@ -1,4 +1,4 @@
-use super::errors::{ImgLoaderError, XlsxPathParseError};
+use super::errors::{IoError, XlsxPathParseError};
 use super::unzip_utils::UnzippedPaths;
 use super::*;
 
@@ -29,22 +29,24 @@ impl ImgLoader {
     /// construct a new ImgLoader
     ///
     /// note: a temp/ dir will be created in the current dir
-    pub fn new(xlsx_path: XlsxPath) -> Result<Self, ImgLoaderError> {
+    pub fn new(xlsx_path: XlsxPath) -> Result<Self, IoError> {
         let temp_dir = Path::new("./temp");
         if !temp_dir.exists() {
             if let Err(e) = std::fs::create_dir_all(temp_dir) {
-                return Err(ImgLoaderError::CreateTempDirError(
-                    temp_dir.to_str().unwrap().to_owned(),
-                ));
+                return Err(IoError::CreateTempDirError {
+                    msg: format!(
+                        "cannot create temp dir: {}",
+                        temp_dir.display()
+                    ),
+                    source: e,
+                });
             }
         }
-
-        let xlsx_path_buf = xlsx_path.as_pathbuf();
 
         match unzip_utils::unzip_xlsx(&xlsx_path, temp_dir) {
             Err(e) => return Err(e),
             Ok(UnzippedPaths {
-                unzip_dir,
+                unzip_dir: _,
                 media_dir,
                 workbook_xml,
                 drawing_dir,
@@ -108,6 +110,18 @@ impl ImgLoader {
     }
 }
 
+/// get file extension as string lowercase
+fn get_file_ext_lower<S>(filepath: S) -> String
+where
+    S: AsRef<Path>,
+{
+    filepath
+        .as_ref()
+        .extension()
+        .and_then(OsStr::to_str)
+        .map_or(String::new(), str::to_lowercase)
+}
+
 #[derive(Debug, Display, PartialEq, Eq)]
 /// a NewType containing a string ended with .xlsx
 pub struct XlsxPath(String);
@@ -127,10 +141,7 @@ impl FromStr for XlsxPath {
         if !p.exists() {
             Err(XlsxPathParseError::FileNotFound(s.to_owned()))
         } else {
-            let ext = p
-                .extension()
-                .and_then(OsStr::to_str)
-                .map_or(String::new(), str::to_lowercase);
+            let ext = get_file_ext_lower(p);
 
             if ext != "xlsx" {
                 Err(XlsxPathParseError::InvalidFormat {

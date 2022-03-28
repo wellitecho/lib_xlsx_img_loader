@@ -14,9 +14,13 @@ pub enum XlsxPathParseError {
 
 
 #[derive(Error, Debug)]
-pub enum ImgLoaderError {
-    #[error("cannot create temp dir: {0}")]
-    CreateTempDirError(String),
+pub enum IoError {
+    #[error("Failed to create temp dir.")]
+    CreateTempDirError{
+        msg: String,
+        #[source]
+        source: std::io::Error,
+    },
     #[error(transparent)]
     UnzipXlsxError(#[from] std::io::Error),
 }
