@@ -4,7 +4,7 @@ Given an xlsx file,
 2.  then use _ImgLoader::new(XlsxPath)_ to copy this xlsx file and unzip it, then parse the xml files to get a map of SheetName -> {(col, row) : imagePath}
 
 
-# Usage
+# Example
 ```rust
 use lib_xlsx_img_loader::{ImgLoader, XlsxPath};
 use read_input::prelude::*;
@@ -22,6 +22,6 @@ fn main() {
         }
         Err(e) => println!("{e}"),
     }
-    println!("Hello, world!");
+    println!("Hey, it works!");
 }
 ```
