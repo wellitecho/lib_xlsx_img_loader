@@ -1,9 +1,11 @@
-use anyhow::Error;
+// use anyhow::Error;
 use core::iter::IntoIterator;
 use roxmltree::{Document, Namespace, Node};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use super::errors::IoError;
 
 #[derive(Debug)]
 pub struct Entry {
@@ -12,14 +14,20 @@ pub struct Entry {
     r_id: Option<String>,
 }
 
-pub fn compute_abs_img_path(relative_img_path: &Path, media_dir: &Path) -> PathBuf {
+pub fn compute_abs_img_path(
+    relative_img_path: &Path,
+    media_dir: &Path,
+) -> PathBuf {
     let basename = relative_img_path.file_name().unwrap();
     let abs_img = media_dir.join(basename).canonicalize().unwrap();
 
     abs_img
 }
 
-fn get_namespace_str<'a>(namespaces: &'a [Namespace], ident: &'a str) -> Option<&'a str> {
+fn get_namespace_str<'a>(
+    namespaces: &'a [Namespace],
+    ident: &'a str,
+) -> Option<&'a str> {
     namespaces.into_iter().find_map(|n| {
         if n.name() == Some(ident) {
             Some(n.uri())
@@ -68,7 +76,9 @@ pub fn get_col_row_r_id(col_row_r_id_file: &Path) -> Vec<Entry> {
     let ns_xdr = get_namespace_str(namespaces, "xdr");
     let ns_a = get_namespace_str(namespaces, "a");
 
-    let ns_r = Some("http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+    let ns_r = Some(
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+    );
 
     if ns_xdr.is_some() && ns_a.is_some() && ns_r.is_some() {
         for two_cell_anchor in doc.descendants().into_iter().filter(|c| {
@@ -79,33 +89,49 @@ pub fn get_col_row_r_id(col_row_r_id_file: &Path) -> Vec<Entry> {
             let mut row: Option<i64> = None;
             let mut r_id: Option<String> = None;
 
-            if let Some(from_node) =
-                get_node_with_tag_namespace(&two_cell_anchor, ns_xdr.unwrap(), "from")
-            {
-                if let Some(col_node) =
-                    get_node_with_tag_namespace(&from_node, ns_xdr.unwrap(), "col")
-                {
-                    col = convert_node_text_to_i64(&col_node).and_then(|num| Some(num + 1));
+            if let Some(from_node) = get_node_with_tag_namespace(
+                &two_cell_anchor,
+                ns_xdr.unwrap(),
+                "from",
+            ) {
+                if let Some(col_node) = get_node_with_tag_namespace(
+                    &from_node,
+                    ns_xdr.unwrap(),
+                    "col",
+                ) {
+                    col = convert_node_text_to_i64(&col_node)
+                        .and_then(|num| Some(num + 1));
                 }
-                if let Some(row_node) =
-                    get_node_with_tag_namespace(&from_node, ns_xdr.unwrap(), "row")
-                {
-                    row = convert_node_text_to_i64(&row_node).and_then(|num| Some(num + 1));
+                if let Some(row_node) = get_node_with_tag_namespace(
+                    &from_node,
+                    ns_xdr.unwrap(),
+                    "row",
+                ) {
+                    row = convert_node_text_to_i64(&row_node)
+                        .and_then(|num| Some(num + 1));
                 }
             }
 
-            if let Some(pic_node) =
-                get_node_with_tag_namespace(&two_cell_anchor, ns_xdr.unwrap(), "pic")
-            {
-                if let Some(blip_fill_node) =
-                    get_node_with_tag_namespace(&pic_node, ns_xdr.unwrap(), "blipFill")
-                {
-                    if let Some(blip_node) =
-                        get_node_with_tag_namespace(&blip_fill_node, ns_a.unwrap(), "blip")
-                    {
-                        if let Some(embed_ele) =
-                            get_node_with_attr_namespace(&blip_node, ns_r.unwrap(), "embed")
-                        {
+            if let Some(pic_node) = get_node_with_tag_namespace(
+                &two_cell_anchor,
+                ns_xdr.unwrap(),
+                "pic",
+            ) {
+                if let Some(blip_fill_node) = get_node_with_tag_namespace(
+                    &pic_node,
+                    ns_xdr.unwrap(),
+                    "blipFill",
+                ) {
+                    if let Some(blip_node) = get_node_with_tag_namespace(
+                        &blip_fill_node,
+                        ns_a.unwrap(),
+                        "blip",
+                    ) {
+                        if let Some(embed_ele) = get_node_with_attr_namespace(
+                            &blip_node,
+                            ns_r.unwrap(),
+                            "embed",
+                        ) {
                             let attrs = embed_ele.attributes();
                             r_id = Some(attrs[0].value().to_owned());
                             //dbg!(r_id);
@@ -121,10 +147,11 @@ pub fn get_col_row_r_id(col_row_r_id_file: &Path) -> Vec<Entry> {
     entries
 }
 
-pub fn get_rid_img_dict(rels_file: &Path) -> Result<HashMap<String, String>, Error> {
-    Ok(
-        if let Ok(doc) = Document::parse(&(fs::read_to_string(rels_file)?)) {
-            doc.descendants()
+pub fn get_rid_img_dict(
+    rels_file: &Path,
+) -> Result<HashMap<String, String>, IoError> {
+    if let Ok(doc) = Document::parse(&(fs::read_to_string(rels_file)?)) {
+        Ok(doc.descendants()
                 .into_iter()
                 .filter_map(|n| {
                     n.has_tag_name((
@@ -138,11 +165,10 @@ pub fn get_rid_img_dict(rels_file: &Path) -> Result<HashMap<String, String>, Err
                         )
                     })
                 })
-                .collect::<HashMap<String, String>>()
-        } else {
-            HashMap::new()
-        },
-    )
+                .collect::<HashMap<String, String>>())
+    } else {
+        Ok(HashMap::new())
+    }
 }
 
 pub fn generate_col_row_abs_img_dict(
@@ -150,19 +176,23 @@ pub fn generate_col_row_abs_img_dict(
     rid_img_dict: HashMap<String, String>,
     media_dir: &Path,
 ) -> HashMap<(i64, i64), Vec<PathBuf>> {
-    let mut col_row_abs_img_dict: HashMap<(i64, i64), Vec<PathBuf>> = HashMap::new();
+    let mut col_row_abs_img_dict: HashMap<(i64, i64), Vec<PathBuf>> =
+        HashMap::new();
     for entry in col_row_rid {
         let img = rid_img_dict.get(&(entry.r_id.unwrap()));
         if let Some(relative_img_path) = img {
             let relative_img_path = Path::new(relative_img_path);
-            let abs_img_path = compute_abs_img_path(relative_img_path, media_dir);
-            if let Some(imgs) =
-                col_row_abs_img_dict.get_mut(&(entry.col.unwrap(), entry.row.unwrap()))
+            let abs_img_path =
+                compute_abs_img_path(relative_img_path, media_dir);
+            if let Some(imgs) = col_row_abs_img_dict
+                .get_mut(&(entry.col.unwrap(), entry.row.unwrap()))
             {
                 imgs.push(abs_img_path);
             } else {
-                col_row_abs_img_dict
-                    .insert((entry.col.unwrap(), entry.row.unwrap()), vec![abs_img_path]);
+                col_row_abs_img_dict.insert(
+                    (entry.col.unwrap(), entry.row.unwrap()),
+                    vec![abs_img_path],
+                );
             }
         }
     }
@@ -212,7 +242,8 @@ pub fn get_sheet_and_drawing_xml_map(
 
     for rels_file in rels_files {
         let rels_file_clone = rels_file.clone();
-        let rels_file_last_component = rels_file_clone.file_name().unwrap().to_str().unwrap();
+        let rels_file_last_component =
+            rels_file_clone.file_name().unwrap().to_str().unwrap();
         let file_str = std::fs::read_to_string(&rels_file).unwrap();
         let doc = Document::parse(&file_str).unwrap();
         if let Some(relationship_node) = doc

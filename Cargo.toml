@@ -7,8 +7,6 @@ edition = "2021"
 
 [dependencies]
 roxmltree = "0.14.1"
-read_input = "0.8.6"
-anyhow = "1"
 zip = "0.6"
 derive_more = "0.99.17"
 thiserror = "1"
