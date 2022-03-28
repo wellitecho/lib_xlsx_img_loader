@@ -10,7 +10,7 @@ pub enum XlsxPathParseError {
 
 #[derive(Error, Debug)]
 pub enum IoError {
-    #[error("Failed to create temp dir.")]
+    #[error("CreateTempDirError: Failed to create temp dir.")]
     CreateTempDirError {
         msg: String,
         #[source]

@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use super::errors::IoError;
 
 #[derive(Debug)]
-pub struct Entry {
+pub struct CellImgId {
     col: Option<i64>,
     row: Option<i64>,
     r_id: Option<String>,
@@ -28,13 +28,9 @@ fn get_namespace_str<'a>(
     namespaces: &'a [Namespace],
     ident: &'a str,
 ) -> Option<&'a str> {
-    namespaces.into_iter().find_map(|n| {
-        if n.name() == Some(ident) {
-            Some(n.uri())
-        } else {
-            None
-        }
-    })
+    namespaces
+        .into_iter()
+        .find_map(|n| n.name().and_then(|k| (k == ident).then(|| n.uri())))
 }
 
 fn get_node_with_tag_namespace<'a>(
@@ -64,8 +60,8 @@ fn convert_node_text_to_i64(node: &Node) -> Option<i64> {
         .and_then(|num| Some(num))
 }
 
-pub fn get_col_row_r_id(col_row_r_id_file: &Path) -> Vec<Entry> {
-    let mut entries: Vec<Entry> = Vec::new();
+pub fn get_col_row_r_id(col_row_r_id_file: &Path) -> Vec<CellImgId> {
+    let mut entries: Vec<CellImgId> = Vec::new();
     let file_str = std::fs::read_to_string(col_row_r_id_file).unwrap();
     let doc = Document::parse(&file_str).unwrap();
     let namespaces = doc.root_element().namespaces();
@@ -140,7 +136,7 @@ pub fn get_col_row_r_id(col_row_r_id_file: &Path) -> Vec<Entry> {
                 }
             }
 
-            entries.push(Entry { col, row, r_id })
+            entries.push(CellImgId { col, row, r_id })
         }
     }
 
@@ -172,7 +168,7 @@ pub fn get_rid_img_dict(
 }
 
 pub fn generate_col_row_abs_img_dict(
-    col_row_rid: Vec<Entry>,
+    col_row_rid: Vec<CellImgId>,
     rid_img_dict: HashMap<String, String>,
     media_dir: &Path,
 ) -> HashMap<(i64, i64), Vec<PathBuf>> {

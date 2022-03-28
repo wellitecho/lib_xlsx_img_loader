@@ -12,12 +12,3 @@ mod structs;
 mod unzip_utils;
 
 pub use structs::{ImgLoader, XlsxPath};
-
-// #[cfg(test)]
-// mod tests {
-//     #[test]
-//     fn it_works() {
-//         let result = 2 + 2;
-//         assert_eq!(result, 4);
-//     }
-// }
