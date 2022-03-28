@@ -2,12 +2,12 @@ use super::errors::{IoError, XlsxPathParseError};
 use super::unzip_utils::UnzippedPaths;
 use super::*;
 
-use derive_more::Display;
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::primitive::str;
 use std::str::FromStr;
+use std::fmt;
 
 /// main struct to contain the retrieved info
 ///
@@ -122,9 +122,16 @@ where
         .map_or(String::new(), str::to_lowercase)
 }
 
-#[derive(Debug, Display, PartialEq, Eq)]
+#[derive(Debug)]
 /// a NewType containing a string ended with .xlsx
 pub struct XlsxPath(String);
+
+
+impl fmt::Display for XlsxPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 impl XlsxPath {
     /// convert XlsxPath's inner String to PathBuf
