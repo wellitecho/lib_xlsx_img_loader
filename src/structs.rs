@@ -4,10 +4,10 @@ use super::*;
 
 use std::collections::HashMap;
 use std::ffi::OsStr;
+use std::fmt;
 use std::path::{Path, PathBuf};
 use std::primitive::str;
 use std::str::FromStr;
-use std::fmt;
 
 /// main struct to contain the retrieved info
 ///
@@ -125,7 +125,6 @@ where
 #[derive(Debug)]
 /// a NewType containing a string ended with .xlsx
 pub struct XlsxPath(String);
-
 
 impl fmt::Display for XlsxPath {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

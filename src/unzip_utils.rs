@@ -15,7 +15,6 @@ pub struct UnzippedPaths {
     pub worksheet_rels_dir: PathBuf,
 }
 
-
 pub fn unzip_xlsx<N>(
     xlsx_file: &XlsxPath,
     temp_dir: N,
