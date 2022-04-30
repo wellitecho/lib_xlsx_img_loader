@@ -12,6 +12,7 @@ use std::str::FromStr;
 
 fn main() {
     println!("input xlsx to unzip: ");
+    let unzip_dir = "./unzip";
     let input_xlsx = input::<String>().get();
     match XlsxPath::from_str(&input_xlsx) {
         Ok(xlsx_path) => {
@@ -21,7 +22,7 @@ fn main() {
                 ref worksheet_name_id_map,
                 ref worksheet_name_img_map,
                 ref worksheet_id_img_map
-            }) = ImgLoader::new(&xlsx_path) {
+            }) = ImgLoader::new(&xlsx_path, unzip_dir) {
                 dbg!(&worksheet_name_id_map);
                 dbg!(worksheet_name_img_map);
                 println!("Hey, it works!");

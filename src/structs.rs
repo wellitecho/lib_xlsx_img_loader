@@ -38,8 +38,8 @@ impl ImgLoader {
     /// construct a new ImgLoader
     ///
     /// note: a temp/ dir will be created in the current dir
-    pub fn new(xlsx_path: &XlsxPath) -> Result<Self, IoError> {
-        let temp_dir = Path::new("./temp");
+    pub fn new(xlsx_path: &XlsxPath, unzip_dir: &str) -> Result<Self, IoError> {
+        let temp_dir = Path::new(unzip_dir);
         if !temp_dir.exists() {
             if let Err(e) = std::fs::create_dir_all(temp_dir) {
                 return Err(IoError::CreateTempDirError {
