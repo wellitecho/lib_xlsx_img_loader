@@ -20,7 +20,7 @@ pub fn compute_abs_img_path(
 ) -> PathBuf {
     let basename = relative_img_path.file_name().unwrap();
     let abs_img = media_dir.join(basename).canonicalize().unwrap();
-
+    dbg!(&abs_img);
     abs_img
 }
 
@@ -78,8 +78,9 @@ pub fn get_col_row_r_id(col_row_r_id_file: &Path) -> Vec<CellImgId> {
 
     if ns_xdr.is_some() && ns_a.is_some() && ns_r.is_some() {
         for two_cell_anchor in doc.descendants().into_iter().filter(|c| {
-            c.lookup_namespace_uri(Some("xdr")).is_some()
-                && c.has_tag_name((ns_xdr.unwrap(), "twoCellAnchor"))
+            c.has_tag_name((ns_xdr.unwrap(), "twoCellAnchor"))
+            // c.lookup_namespace_uri(Some("xdr")).is_some()
+            //     && c.has_tag_name((ns_xdr.unwrap(), "twoCellAnchor"))
         }) {
             let mut col: Option<i64> = None;
             let mut row: Option<i64> = None;
@@ -172,6 +173,9 @@ pub fn generate_col_row_abs_img_dict(
     rid_img_dict: HashMap<String, String>,
     media_dir: &Path,
 ) -> HashMap<(i64, i64), Vec<PathBuf>> {
+    dbg!(&col_row_rid);
+    dbg!(&rid_img_dict);
+    dbg!(&media_dir);
     let mut col_row_abs_img_dict: HashMap<(i64, i64), Vec<PathBuf>> =
         HashMap::new();
     for entry in col_row_rid {
@@ -265,4 +269,99 @@ pub fn get_sheet_and_drawing_xml_map(
     }
 
     sheet_drawing_xml_map
+}
+
+
+
+fn get_node_with_tag<'a>(
+    parent_node: &'a Node,
+    tag_name: &'a str,
+) -> Option<Node<'a, 'a>> {
+    parent_node
+        .descendants()
+        .into_iter()
+        .find_map(|n| n.has_tag_name((tag_name)).then(|| n))
+}
+
+
+pub fn get_col_row_r_id_sans_xdr(col_row_r_id_file: &Path) -> Vec<CellImgId> {
+    let mut entries: Vec<CellImgId> = Vec::new();
+    let file_str = std::fs::read_to_string(col_row_r_id_file).unwrap();
+    let doc = Document::parse(&file_str).unwrap();
+    let namespaces = doc.root_element().namespaces();
+
+    // let ns_default = Some("http://schemas.openxmlformats.org/package/2006/relationships");
+    // let xdr_str = "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing";
+    // let ns_r = get_namespace_str(namespaces, "r");
+    let ns_xdr = get_namespace_str(namespaces, "xdr");
+    let mut ns_a = get_namespace_str(namespaces, "a");
+
+    if !ns_a.is_some() {
+        ns_a = Some("http://schemas.openxmlformats.org/drawingml/2006/main");
+    }
+    let ns_r = Some(
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+    );
+
+    if ns_a.is_some() && ns_r.is_some() {
+        for two_cell_anchor in doc.descendants().into_iter().filter(|c| {
+            c.has_tag_name(("twoCellAnchor"))
+            // c.lookup_namespace_uri(Some("xdr")).is_some()
+            //     && c.has_tag_name((ns_xdr.unwrap(), "twoCellAnchor"))
+        }) {
+            let mut col: Option<i64> = None;
+            let mut row: Option<i64> = None;
+            let mut r_id: Option<String> = None;
+
+            if let Some(from_node) = get_node_with_tag(
+                &two_cell_anchor,
+                "from",
+            ) {
+                if let Some(col_node) = get_node_with_tag(
+                    &from_node,
+                    "col",
+                ) {
+                    col = convert_node_text_to_i64(&col_node)
+                        .and_then(|num| Some(num + 1));
+                }
+                if let Some(row_node) = get_node_with_tag(
+                    &from_node,
+                    "row",
+                ) {
+                    row = convert_node_text_to_i64(&row_node)
+                        .and_then(|num| Some(num + 1));
+                }
+            }
+
+            if let Some(pic_node) = get_node_with_tag(
+                &two_cell_anchor,
+                "pic",
+            ) {
+                if let Some(blip_fill_node) = get_node_with_tag(
+                    &pic_node,
+                    "blipFill",
+                ) {
+                    if let Some(blip_node) = get_node_with_tag_namespace(
+                        &blip_fill_node,
+                        ns_a.unwrap(),
+                        "blip",
+                    ) {
+                        if let Some(embed_ele) = get_node_with_attr_namespace(
+                            &blip_node,
+                            ns_r.unwrap(),
+                            "embed",
+                        ) {
+                            let attrs = embed_ele.attributes();
+                            r_id = Some(attrs[0].value().to_owned());
+                            //dbg!(r_id);
+                        }
+                    }
+                }
+            }
+
+            entries.push(CellImgId { col, row, r_id })
+        }
+    }
+
+    entries
 }

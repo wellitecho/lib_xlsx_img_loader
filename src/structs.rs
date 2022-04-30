@@ -26,14 +26,14 @@ pub struct ImgLoader {
         HashMap<String, HashMap<(i64, i64), Vec<PathBuf>>>,
     pub worksheet_id_img_map: HashMap<i64, HashMap<(i64, i64), Vec<PathBuf>>>,
 }
-impl Drop for ImgLoader {
-    fn drop(&mut self) {
-        match std::fs::remove_dir_all(&self.unzip_dir) {
-            Ok(_) => {}
-            Err(_) => {}
-        }
-    }
-}
+// impl Drop for ImgLoader {
+//     fn drop(&mut self) {
+//         match std::fs::remove_dir_all(&self.unzip_dir) {
+//             Ok(_) => {}
+//             Err(_) => {}
+//         }
+//     }
+// }
 impl ImgLoader {
     /// construct a new ImgLoader
     ///
@@ -53,7 +53,7 @@ impl ImgLoader {
         }
 
         match unzip_utils::unzip_xlsx(&xlsx_path, temp_dir) {
-            Err(e) => return Err(e),
+            Err(e) => {dbg!(&e); return Err(e)},
             Ok(UnzippedPaths {
                 unzip_dir,
                 media_dir,
@@ -76,7 +76,7 @@ impl ImgLoader {
                         &worksheet_rels_dir.as_path(),
                         &drawing_dir.as_path(),
                     );
-
+                dbg!(&sheet_and_drawing_xml_map);
                 for (sheet_id, sheet_name) in worksheet_name_id_map.clone() {
                     let sheet_rels_filename =
                         format!("sheet{sheet_id}.xml.rels");
@@ -90,13 +90,18 @@ impl ImgLoader {
                         let drawing_rels_filepath =
                             drawing_rels_dir.join(drawing_rels_filename);
 
-                        let col_row_rid = parse_xml::get_col_row_r_id(
+                        // let col_row_rid = parse_xml::get_col_row_r_id(
+                        //     &drawing_xml.as_path(),
+                        // );
+
+                        let col_row_rid = parse_xml::get_col_row_r_id_sans_xdr(
                             &drawing_xml.as_path(),
                         );
 
                         if let Ok(rid_img_dict) = parse_xml::get_rid_img_dict(
                             &drawing_rels_filepath.as_path(),
                         ) {
+                            // dbg!(&rid_img_dict);
                             let col_row_abs_img_dict =
                                 parse_xml::generate_col_row_abs_img_dict(
                                     col_row_rid,
