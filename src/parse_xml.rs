@@ -20,7 +20,7 @@ pub fn compute_abs_img_path(
 ) -> PathBuf {
     let basename = relative_img_path.file_name().unwrap();
     let abs_img = media_dir.join(basename).canonicalize().unwrap();
-    dbg!(&abs_img);
+    // dbg!(&abs_img);
     abs_img
 }
 
@@ -173,9 +173,9 @@ pub fn generate_col_row_abs_img_dict(
     rid_img_dict: HashMap<String, String>,
     media_dir: &Path,
 ) -> HashMap<(i64, i64), Vec<PathBuf>> {
-    dbg!(&col_row_rid);
-    dbg!(&rid_img_dict);
-    dbg!(&media_dir);
+    // dbg!(&col_row_rid);
+    // dbg!(&rid_img_dict);
+    // dbg!(&media_dir);
     let mut col_row_abs_img_dict: HashMap<(i64, i64), Vec<PathBuf>> =
         HashMap::new();
     for entry in col_row_rid {
@@ -353,7 +353,7 @@ pub fn get_col_row_r_id_sans_xdr(col_row_r_id_file: &Path) -> Vec<CellImgId> {
                         ) {
                             let attrs = embed_ele.attributes();
                             r_id = Some(attrs[0].value().to_owned());
-                            //dbg!(r_id);
+                          
                         }
                     }
                 }

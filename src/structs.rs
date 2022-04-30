@@ -76,7 +76,7 @@ impl ImgLoader {
                         &worksheet_rels_dir.as_path(),
                         &drawing_dir.as_path(),
                     );
-                dbg!(&sheet_and_drawing_xml_map);
+                // dbg!(&sheet_and_drawing_xml_map);
                 for (sheet_id, sheet_name) in worksheet_name_id_map.clone() {
                     let sheet_rels_filename =
                         format!("sheet{sheet_id}.xml.rels");
