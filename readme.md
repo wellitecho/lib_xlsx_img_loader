@@ -15,13 +15,20 @@ fn main() {
     let input_xlsx = input::<String>().get();
     match XlsxPath::from_str(&input_xlsx) {
         Ok(xlsx_path) => {
-            if let Ok(img_loader) = ImgLoader::new(xlsx_path) {
-                dbg!(&img_loader.worksheet_name_id_map);
-                dbg!(&img_loader.worksheet_name_img_map);
+            if let Ok(ImgLoader {
+                ref xlsx_path,
+                ref unzip_dir,
+                ref worksheet_name_id_map,
+                ref worksheet_name_img_map,
+                ref worksheet_id_img_map
+            }) = ImgLoader::new(&xlsx_path) {
+                dbg!(&worksheet_name_id_map);
+                dbg!(worksheet_name_img_map);
+                println!("Hey, it works!");
             }
         }
         Err(e) => println!("{e}"),
     }
-    println!("Hey, it works!");
+    
 }
 ```

@@ -38,7 +38,7 @@ impl ImgLoader {
     /// construct a new ImgLoader
     ///
     /// note: a temp/ dir will be created in the current dir
-    pub fn new(xlsx_path: XlsxPath) -> Result<Self, IoError> {
+    pub fn new(xlsx_path: &XlsxPath) -> Result<Self, IoError> {
         let temp_dir = Path::new("./temp");
         if !temp_dir.exists() {
             if let Err(e) = std::fs::create_dir_all(temp_dir) {
@@ -114,7 +114,7 @@ impl ImgLoader {
                     }
                 }
                 Ok(ImgLoader {
-                    xlsx_path,
+                    xlsx_path: (*xlsx_path).clone(),
                     unzip_dir,
                     worksheet_name_id_map,
                     worksheet_name_img_map,
@@ -137,7 +137,7 @@ where
         .map_or(String::new(), str::to_lowercase)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// a NewType containing a string ended with .xlsx
 pub struct XlsxPath(String);
 
@@ -151,6 +151,10 @@ impl XlsxPath {
     /// convert XlsxPath's inner String to PathBuf
     pub fn as_pathbuf(&self) -> PathBuf {
         PathBuf::from(&self.0)
+    }
+
+    pub fn get_str(&self) -> &str {
+        &self.0
     }
 }
 
