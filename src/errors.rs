@@ -19,3 +19,4 @@ pub enum IoError {
     #[error(transparent)]
     UnzipXlsxError(#[from] std::io::Error),
 }
+

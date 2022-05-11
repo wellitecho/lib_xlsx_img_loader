@@ -2,7 +2,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use super::errors::IoError;
+use super::errors::{IoError};
 use super::structs::XlsxPath;
 
 pub struct UnzippedPaths {
@@ -17,7 +17,7 @@ pub struct UnzippedPaths {
 pub fn unzip_xlsx<N>(
     xlsx_file: &XlsxPath,
     temp_dir: N,
-) -> Result<UnzippedPaths, IoError>
+) -> Result<Option<UnzippedPaths>, IoError>
 where
     N: AsRef<Path>,
 {
@@ -58,12 +58,27 @@ where
     }
     let xl_dir = unzip_dir.join("xl");
     fs::remove_file(&rename_to_zip)?;
-    Ok(UnzippedPaths {
-        unzip_dir,
-        media_dir: xl_dir.join("media"),
-        workbook_xml: xl_dir.join("workbook.xml"),
-        drawing_dir: xl_dir.join("drawings"),
-        drawing_rels_dir: xl_dir.join("drawings").join("_rels"),
-        worksheet_rels_dir: xl_dir.join("worksheets").join("_rels"),
-    })
+    let media_dir = xl_dir.join("media");
+    let workbook_xml = xl_dir.join("workbook.xml");
+    let drawing_dir = xl_dir.join("drawings");
+    let drawing_rels_dir = xl_dir.join("drawings").join("_rels");
+    let worksheet_rels_dir = xl_dir.join("worksheets").join("_rels");
+
+    if media_dir.exists()
+        && workbook_xml.exists()
+        && drawing_dir.exists()
+        && drawing_rels_dir.exists()
+        && worksheet_rels_dir.exists()
+    {
+        Ok(Some(UnzippedPaths {
+            unzip_dir,
+            media_dir,
+            workbook_xml,
+            drawing_dir,
+            drawing_rels_dir,
+            worksheet_rels_dir,
+        }))
+    } else {
+        Ok(None)
+    }
 }

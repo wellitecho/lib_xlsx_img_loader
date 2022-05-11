@@ -38,7 +38,7 @@ impl ImgLoader {
     /// construct a new ImgLoader
     ///
     /// note: a temp/ dir will be created in the current dir
-    pub fn new(xlsx_path: &XlsxPath, unzip_dir: &str) -> Result<Self, IoError> {
+    pub fn new(xlsx_path: &XlsxPath, unzip_dir: &str) -> Result<Option<Self>, IoError> {
         let temp_dir = Path::new(unzip_dir);
         if !temp_dir.exists() {
             if let Err(e) = std::fs::create_dir_all(temp_dir) {
@@ -53,15 +53,16 @@ impl ImgLoader {
         }
 
         match unzip_utils::unzip_xlsx(&xlsx_path, temp_dir) {
-            Err(e) => {dbg!(&e); return Err(e)},
-            Ok(UnzippedPaths {
+            Err(e) => {return Err(e)},
+            Ok(None) => {Ok(None)}
+            Ok(Some(UnzippedPaths {
                 unzip_dir,
                 media_dir,
                 workbook_xml,
                 drawing_dir,
                 drawing_rels_dir,
                 worksheet_rels_dir,
-            }) => {
+            })) => {
                 let mut worksheet_name_img_map = HashMap::new();
                 let mut worksheet_id_img_map = HashMap::new();
                 // parse workbook_xml, get worksheet names and ids
@@ -118,13 +119,13 @@ impl ImgLoader {
                         }
                     }
                 }
-                Ok(ImgLoader {
+                Ok(Some(ImgLoader {
                     xlsx_path: (*xlsx_path).clone(),
                     unzip_dir,
                     worksheet_name_id_map,
                     worksheet_name_img_map,
                     worksheet_id_img_map,
-                })
+                }))
             }
         }
     }

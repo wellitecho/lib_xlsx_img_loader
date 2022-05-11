@@ -305,7 +305,7 @@ pub fn get_col_row_r_id_sans_xdr(col_row_r_id_file: &Path) -> Vec<CellImgId> {
 
     if ns_a.is_some() && ns_r.is_some() {
         for two_cell_anchor in doc.descendants().into_iter().filter(|c| {
-            c.has_tag_name(("twoCellAnchor"))
+            c.has_tag_name("twoCellAnchor")
             // c.lookup_namespace_uri(Some("xdr")).is_some()
             //     && c.has_tag_name((ns_xdr.unwrap(), "twoCellAnchor"))
         }) {
