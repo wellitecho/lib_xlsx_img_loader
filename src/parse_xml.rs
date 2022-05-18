@@ -180,7 +180,7 @@ pub fn generate_col_row_abs_img_dict(
         HashMap::new();
     for entry in col_row_rid {
         // let img = rid_img_dict.get(&(entry.r_id.unwrap()));
-        dbg!(&entry.r_id);
+        // dbg!(&entry.r_id);
         let img = entry.r_id.and_then(|id| rid_img_dict.get(&id));
         if let Some(relative_img_path) = img {
             let relative_img_path = Path::new(relative_img_path);

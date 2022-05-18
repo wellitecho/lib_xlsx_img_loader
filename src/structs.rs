@@ -18,6 +18,8 @@ use std::str::FromStr;
 ///
 /// **worksheet_name_img_map**: a full map of {sheetname: {(col, row): imgpath}}
 ///
+/// 
+#[derive(Debug)]
 pub struct ImgLoader {
     pub xlsx_path: XlsxPath,
     pub unzip_dir: PathBuf,
@@ -34,6 +36,7 @@ pub struct ImgLoader {
 //         }
 //     }
 // }
+
 impl ImgLoader {
     /// construct a new ImgLoader
     ///
