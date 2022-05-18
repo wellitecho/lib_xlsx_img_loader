@@ -179,7 +179,9 @@ pub fn generate_col_row_abs_img_dict(
     let mut col_row_abs_img_dict: HashMap<(i64, i64), Vec<PathBuf>> =
         HashMap::new();
     for entry in col_row_rid {
-        let img = rid_img_dict.get(&(entry.r_id.unwrap()));
+        // let img = rid_img_dict.get(&(entry.r_id.unwrap()));
+        dbg!(&entry.r_id);
+        let img = entry.r_id.and_then(|id| rid_img_dict.get(&id));
         if let Some(relative_img_path) = img {
             let relative_img_path = Path::new(relative_img_path);
             let abs_img_path =
@@ -354,6 +356,16 @@ pub fn get_col_row_r_id_sans_xdr(col_row_r_id_file: &Path) -> Vec<CellImgId> {
                             let attrs = embed_ele.attributes();
                             r_id = Some(attrs[0].value().to_owned());
                           
+                        }
+                    }
+                }
+            } else if let Some(pic_node) = get_node_with_tag(&two_cell_anchor, "sp") {
+                if let Some(sppr_node) = get_node_with_tag(&pic_node, "spPr") {
+                    if let Some(blip_fill_node) = get_node_with_tag(&sppr_node, "blipFill") {
+                        if let Some(blip_node) = get_node_with_tag(&blip_fill_node, "blip") {
+                            let attrs = blip_node.attributes();
+                            r_id = Some(attrs[0].value().to_owned());
+
                         }
                     }
                 }
