@@ -1,9 +1,11 @@
 // use anyhow::Error;
 use core::iter::IntoIterator;
-use roxmltree::{Document, Namespace, Node};
+use roxmltree::{Document, Namespace, Node, NamespaceIter};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use std::iter::Iterator;
 
 use super::errors::IoError;
 
@@ -25,9 +27,10 @@ pub fn compute_abs_img_path(
 }
 
 fn get_namespace_str<'a>(
-    namespaces: &'a [Namespace],
+    namespaces: &'a NamespaceIter<'_, '_>,
     ident: &'a str,
 ) -> Option<&'a str> {
+    let namespaces = namespaces.to_owned();
     namespaces
         .into_iter()
         .find_map(|n| n.name().and_then(|k| (k == ident).then(|| n.uri())))
@@ -69,8 +72,8 @@ pub fn get_col_row_r_id(col_row_r_id_file: &Path) -> Vec<CellImgId> {
     // let ns_default = Some("http://schemas.openxmlformats.org/package/2006/relationships");
     // let xdr_str = "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing";
     // let ns_r = get_namespace_str(namespaces, "r");
-    let ns_xdr = get_namespace_str(namespaces, "xdr");
-    let ns_a = get_namespace_str(namespaces, "a");
+    let ns_xdr = get_namespace_str(&namespaces, "xdr");
+    let ns_a = get_namespace_str(&namespaces, "a");
 
     let ns_r = Some(
         "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
@@ -129,8 +132,8 @@ pub fn get_col_row_r_id(col_row_r_id_file: &Path) -> Vec<CellImgId> {
                             ns_r.unwrap(),
                             "embed",
                         ) {
-                            let attrs = embed_ele.attributes();
-                            r_id = Some(attrs[0].value().to_owned());
+                            let mut attrs = embed_ele.attributes();
+                            r_id = Some(attrs.next().unwrap().value().to_owned());
                             //dbg!(r_id);
                         }
                     }
@@ -295,8 +298,8 @@ pub fn get_col_row_r_id_sans_xdr(col_row_r_id_file: &Path) -> Vec<CellImgId> {
     // let ns_default = Some("http://schemas.openxmlformats.org/package/2006/relationships");
     // let xdr_str = "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing";
     // let ns_r = get_namespace_str(namespaces, "r");
-    let ns_xdr = get_namespace_str(namespaces, "xdr");
-    let mut ns_a = get_namespace_str(namespaces, "a");
+    let ns_xdr = get_namespace_str(&namespaces, "xdr");
+    let mut ns_a = get_namespace_str(&namespaces, "a");
 
     if !ns_a.is_some() {
         ns_a = Some("http://schemas.openxmlformats.org/drawingml/2006/main");
@@ -353,8 +356,8 @@ pub fn get_col_row_r_id_sans_xdr(col_row_r_id_file: &Path) -> Vec<CellImgId> {
                             ns_r.unwrap(),
                             "embed",
                         ) {
-                            let attrs = embed_ele.attributes();
-                            r_id = Some(attrs[0].value().to_owned());
+                            let mut attrs = embed_ele.attributes();
+                            r_id = Some(attrs.next().unwrap().value().to_owned());
                           
                         }
                     }
@@ -363,8 +366,8 @@ pub fn get_col_row_r_id_sans_xdr(col_row_r_id_file: &Path) -> Vec<CellImgId> {
                 if let Some(sppr_node) = get_node_with_tag(&pic_node, "spPr") {
                     if let Some(blip_fill_node) = get_node_with_tag(&sppr_node, "blipFill") {
                         if let Some(blip_node) = get_node_with_tag(&blip_fill_node, "blip") {
-                            let attrs = blip_node.attributes();
-                            r_id = Some(attrs[0].value().to_owned());
+                            let mut attrs = blip_node.attributes();
+                            r_id = Some(attrs.next().unwrap().value().to_owned());
 
                         }
                     }
